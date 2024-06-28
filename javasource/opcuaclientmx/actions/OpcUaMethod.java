@@ -47,44 +47,44 @@ public class OpcUaMethod extends CustomJavaAction<java.lang.String>
 		this.OpcUaServerCfg = this.__OpcUaServerCfg == null ? null : opcuaclientmx.proxies.OpcUaServerCfg.initialize(getContext(), __OpcUaServerCfg);
 
 		// BEGIN USER CODE
-                OpcUaClient client = OpcUaClientManager.retrieve(this.context(), this.OpcUaServerCfg);
-                logger.info(String.format("[Method] Invoking method [Server:%s|ObjectId:%s|MethodId:%s]", this.OpcUaServerCfg.getServerID(), this.objectId, this.methodId));
-                
-                NodeId nodeIdObject;
-                NodeId nodeIdMethod;
-                try {
-                        nodeIdObject = NodeId.parse(this.objectId);
-                        nodeIdMethod = NodeId.parse(this.methodId);
-                } catch (Exception e) {
-                        throw new CoreException("Unable to parse ObjectId or MethodId, check if they are correct", e);
-                }
-                
-                
-                CallMethodRequest request = new CallMethodRequest(
-                    nodeIdObject,
-                    nodeIdMethod,
-                    new Variant[]{new Variant(Integer.parseInt(this.input))}
-                );
+        OpcUaClient client = OpcUaClientManager.retrieve(this.context(), this.OpcUaServerCfg);
+        logger.info(String.format("[Method] Invoking method [Server:%s|ObjectId:%s|MethodId:%s]", this.OpcUaServerCfg.getServerID(), this.objectId, this.methodId));
+        
+        NodeId nodeIdObject;
+        NodeId nodeIdMethod;
+        try {
+                nodeIdObject = NodeId.parse(this.objectId);
+                nodeIdMethod = NodeId.parse(this.methodId);
+        } catch (Exception e) {
+                throw new CoreException("Unable to parse ObjectId or MethodId, check if they are correct", e);
+        }
+        
+        
+        CallMethodRequest request = new CallMethodRequest(
+            nodeIdObject,
+            nodeIdMethod,
+            new Variant[]{new Variant(Integer.parseInt(this.input))}
+        );
 
-                CompletableFuture<java.lang.String> fResult = client.call(request).thenCompose(result -> {
-                        StatusCode statusCode = result.getStatusCode();
-                        if (statusCode.isGood()) {
-                                Integer output = (Integer) result.getOutputArguments()[0].getValue();
-                                logger.info(String.format("[Method] Response from [Server:%s|ObjectId:%s|MethodId:%s]; Result: %s", this.OpcUaServerCfg.getServerID(), this.objectId, this.methodId, output));
-                                return CompletableFuture.completedFuture(output.toString());
-                        } else {    
-                                logger.error(String.format("Method call failed: %s", statusCode.toString()));
-                                CompletableFuture<java.lang.String> f = new CompletableFuture<>();
-                                f.completeExceptionally(new UaException(statusCode));
-                                return f;
-                        }
-                });
-
-                try {
-                        return fResult.get();
-                } catch (Exception e) {
-                        throw new CoreException("Error invoking method on the OPC UA server: " + e.getMessage(), e);
+        CompletableFuture<java.lang.String> fResult = client.call(request).thenCompose(result -> {
+                StatusCode statusCode = result.getStatusCode();
+                if (statusCode.isGood()) {
+                        Integer resultOutput = (Integer) result.getOutputArguments()[0].getValue();
+                        logger.info(String.format("[Method] Response from [Server:%s|ObjectId:%s|MethodId:%s]; Result: %s", this.OpcUaServerCfg.getServerID(), this.objectId, this.methodId, resultOutput));
+                        return CompletableFuture.completedFuture(resultOutput.toString());
+                } else {    
+                        logger.error(String.format("Method call failed: %s", statusCode.toString()));
+                        CompletableFuture<java.lang.String> f = new CompletableFuture<>();
+                        f.completeExceptionally(new UaException(statusCode));
+                        return f;
                 }
+        });
+
+        try {
+                return fResult.get();
+        } catch (Exception e) {
+                throw new CoreException("Error invoking method on the OPC UA server: " + e.getMessage(), e);
+        }
 		// END USER CODE
 	}
 
